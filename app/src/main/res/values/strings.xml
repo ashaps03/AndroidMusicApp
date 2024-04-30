@@ -9,4 +9,6 @@
     <string name="invalid_username">Not a valid username</string>
     <string name="invalid_password">Password must be >5 characters</string>
     <string name="login_failed">"Login failed"</string>
+    <string name="spotify_client_id">604c1a5bddb9455ca70811d204f34695</string>
+    <string name="spotify_client_secret">d173684f4dce41288856825e2e850527</string>
 </resources>

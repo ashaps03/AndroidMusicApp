@@ -59,7 +59,7 @@ class SignInActivity : AppCompatActivity() {
         }
 
         signUpRedirect.setOnClickListener {
-            startActivity(Intent(this@SignInActivity, SignUpActivity::class.java))
+            startActivity(Intent(this@SignInActivity, SignUpActivity2::class.java))
         }
     }
 

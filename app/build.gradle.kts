@@ -59,6 +59,10 @@ dependencies {
     implementation ("com.airbnb.android:lottie:6.4.0")
     implementation ("com.firebaseui:firebase-ui-auth:8.0.0")
     implementation ("com.google.android.gms:play-services-auth:20.0.1")
-
+    implementation("com.koushikdutta.ion:ion:3.1.0")
+    implementation("com.google.code.gson:gson:2.10.1")
+    // Retrofit
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
 
 }
