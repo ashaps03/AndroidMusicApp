@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/mainphoto"
+    android:background="@drawable/gradient_glow"
     tools:context=".SignUpActivity2">
 
     <androidx.cardview.widget.CardView
@@ -87,7 +87,7 @@
                 app:layout_constraintStart_toStartOf="parent" />
 
             <Button
-                android:id="@+id/signin_button"
+                android:id="@+id/signInButton"
                 android:layout_width="134dp"
                 android:layout_height="49dp"
                 android:layout_marginTop="4dp"

@@ -9,6 +9,7 @@ import android.widget.Button
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import com.firebase.ui.auth.AuthMethodPickerLayout
 import com.firebase.ui.auth.AuthUI
 import com.firebase.ui.auth.IdpResponse
 import com.google.firebase.auth.FirebaseAuth
@@ -85,9 +86,10 @@ class SignUpActivity2 : AppCompatActivity() {
                     .createSignInIntentBuilder()
                     .setAvailableProviders(providers)
                     .setTosAndPrivacyPolicyUrls("https://example.com", "https://example.com")
-                    .setLogo(R.drawable.logo2)
                     .setAlwaysShowSignInMethodScreen(true) // use this if you have only one provider and really want the see the signin page
                     .setIsSmartLockEnabled(false)
+                    .setTheme(R.style.blueColor) // Add this line to set the background color
+                    .setLogo(R.drawable.guessthatsong)
                     .build()
 
                 // Launch sign-in Activity with the sign-in intent above

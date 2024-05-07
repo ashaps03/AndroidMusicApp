@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- This is a gradient drawable for a light purple to light blue to darker purple effect. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <gradient
+        android:type="linear"
+        android:angle="90"
+    android:startColor="#A387DC"
+    android:centerColor="#6DC5E2"
+    android:endColor="#E6E6FA"
+    android:centerX="40%"
+    android:centerY="40%" />
+</shape>
