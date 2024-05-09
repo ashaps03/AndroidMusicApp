@@ -202,8 +202,9 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         accelerometer?.let {
             sensorManager.registerListener(sensorListener, it, SensorManager.SENSOR_DELAY_NORMAL)
-
         }
+        audioPlayer.play()
+
     }
     override fun onPause() {
         super.onPause()
@@ -303,13 +304,7 @@ class MainActivity : AppCompatActivity() {
 
 
                 if (score > 0) {
-                    score -= 5
                     updateScoreText()
-                } else {
-                    if (loseResponse != null) {
-                        showToast(loseResponse)
-                    }
-
                 }
             }
         }
@@ -443,7 +438,13 @@ class MainActivity : AppCompatActivity() {
         val sharedPrefs = getSharedPreferences("UserSettings", Context.MODE_PRIVATE)
         val isOldiesMode = sharedPrefs.getBoolean("OldiesMode", false)
         binding.modeSwitch.isChecked = isOldiesMode
+        if (isOldiesMode) {
+            currentPlaylistId = "5TgjzgVos90ntuffZgQfBD"  // ID for oldies playlist
+        } else {
+            currentPlaylistId = "37i9dQZEVXbLp5XoPON0wI"  // ID for current hits playlist
+        }
     }
+
 
     private fun createSpotifyService(): SpotifyService {
         return Retrofit.Builder()
