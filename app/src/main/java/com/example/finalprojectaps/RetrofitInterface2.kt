@@ -14,4 +14,3 @@ interface SpotifyService {
     ): Call<PlaylistTrackResult>
 }
 
-//my redirect is: myapp://spotifycallback

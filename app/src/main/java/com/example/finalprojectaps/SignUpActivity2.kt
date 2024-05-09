@@ -13,6 +13,7 @@ import com.firebase.ui.auth.AuthMethodPickerLayout
 import com.firebase.ui.auth.AuthUI
 import com.firebase.ui.auth.IdpResponse
 import com.google.firebase.auth.FirebaseAuth
+import com.koushikdutta.ion.builder.Builders.Any.M
 
 
 class SignUpActivity2 : AppCompatActivity() {
@@ -23,44 +24,36 @@ class SignUpActivity2 : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_register)
 
-        // Get instance of the FirebaseAuth
+        val playButton = findViewById<Button>(R.id.play_button)
+
+        playButton.setOnClickListener {
+            val intent = Intent(this, MainActivity::class.java)
+            startActivity(intent)
+        }
+
         val currentUser = FirebaseAuth.getInstance().currentUser
 
-
-        // If currentUser is not null, we have a user and go back to the MainActivity
         if (currentUser != null) {
             val intent = Intent(this, MainActivity::class.java)
             startActivity(intent)
-            // Make sure to call finish(), otherwise the user would be able to go back to the RegisterActivity
             finish()
         } else {
-            // create a new ActivityResultLauncher to launch the sign-in activity and handle the result
-            // When the result is returned, the result parameter will contain the data and resultCode (e.g., OK, Cancelled etc.).
             val signActivityLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
                 if (result.resultCode == Activity.RESULT_OK) {
-                    // The user has successfully signed in or he/she is a new user
 
                     val user = FirebaseAuth.getInstance().currentUser
                     Log.d(TAG, "onActivityResult: $user")
 
-                    //Checking for User (New/Old) (optional--you do not have to show these toast messages)
                     if (user?.metadata?.creationTimestamp == user?.metadata?.lastSignInTimestamp) {
-                        //This is a New User
                         Toast.makeText(this, "Welcome New User!", Toast.LENGTH_SHORT).show()
                     } else {
-                        //This is a returning user
                         Toast.makeText(this, "Welcome Back!", Toast.LENGTH_SHORT).show()
                     }
 
-                    // Since the user signed in, the user can go back to main activity
-                    startActivity(Intent(this, MainActivity::class.java))
-                    // Make sure to call finish(), otherwise the user would be able to go back to the RegisterActivity
+                    startActivity(Intent(this, menu::class.java))
                     finish()
 
                 } else {
-                    // Sign in failed. If response is null the user canceled the
-                    // sign-in flow using the back button. Otherwise check
-                    // response.getError().getErrorCode() and handle the error.
                     val response = IdpResponse.fromResultIntent(result.data)
                     if (response == null) {
                         Log.d(TAG, "onActivityResult: the user has cancelled the sign in request")
@@ -70,29 +63,22 @@ class SignUpActivity2 : AppCompatActivity() {
                 }
             }
 
-            // Login Button
             findViewById<Button>(R.id.login_button).setOnClickListener {
                 // Choose authentication providers -- make sure enable them on your firebase account first
                 val providers = arrayListOf(
                     AuthUI.IdpConfig.EmailBuilder().build(),
                     AuthUI.IdpConfig.GoogleBuilder().build()
-                    //AuthUI.IdpConfig.PhoneBuilder().build(),
-                    //AuthUI.IdpConfig.FacebookBuilder().build(),
-                    //AuthUI.IdpConfig.TwitterBuilder().build()
                 )
 
-                // Create  sign-in intent
                 val signInIntent = AuthUI.getInstance()
                     .createSignInIntentBuilder()
                     .setAvailableProviders(providers)
                     .setTosAndPrivacyPolicyUrls("https://example.com", "https://example.com")
-                    .setAlwaysShowSignInMethodScreen(true) // use this if you have only one provider and really want the see the signin page
+                    .setAlwaysShowSignInMethodScreen(true)
                     .setIsSmartLockEnabled(false)
-                    .setTheme(R.style.blueColor) // Add this line to set the background color
+                    .setTheme(R.style.blueColor)
                     .setLogo(R.drawable.guessthatsong)
                     .build()
-
-                // Launch sign-in Activity with the sign-in intent above
                 signActivityLauncher.launch(signInIntent)
             }
         }

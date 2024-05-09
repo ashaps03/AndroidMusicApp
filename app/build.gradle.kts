@@ -53,6 +53,8 @@ dependencies {
     implementation ("com.google.firebase:firebase-bom:32.8.1")
     implementation("com.google.firebase:firebase-firestore:24.11.1")
     implementation ("com.google.firebase:firebase-auth:21.0.0")
+    implementation("androidx.navigation:navigation-fragment-ktx:2.7.7")
+    implementation("androidx.navigation:navigation-ui-ktx:2.7.7")
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
@@ -61,11 +63,13 @@ dependencies {
     implementation ("com.google.android.gms:play-services-auth:20.0.1")
     implementation("com.koushikdutta.ion:ion:3.1.0")
     implementation("com.google.code.gson:gson:2.10.1")
-    // Retrofit
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation ("com.squareup.retrofit2:retrofit:2.9.0")
     implementation ("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("com.google.ai.client.generativeai:generativeai:0.3.0")
+    implementation ("androidx.preference:preference:1.1.1")
+
 
 
 }

@@ -11,4 +11,8 @@
     <string name="login_failed">"Login failed"</string>
     <string name="spotify_client_id">604c1a5bddb9455ca70811d204f34695</string>
     <string name="spotify_client_secret">d173684f4dce41288856825e2e850527</string>
+    <string name="title_activity_nav">nav</string>
+    <string name="title_home">Home</string>
+    <string name="title_dashboard">Dashboard</string>
+    <string name="title_notifications">Notifications</string>
 </resources>

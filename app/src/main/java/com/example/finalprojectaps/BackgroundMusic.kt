@@ -20,7 +20,6 @@ object AudioPlayer {
         mediaPlayer?.isLooping = true
 
         mediaPlayer?.setOnCompletionListener {
-            // When the audio playback completes, restart the playback
             mediaPlayer?.start()
         }
     }
@@ -37,33 +36,44 @@ object AudioPlayer {
         }
     }
 
+
+
     fun stop() {
-        mediaPlayer?.stop()
+        if (mediaPlayer?.isPlaying == true) {
+            mediaPlayer?.stop()
+        }
         mediaPlayer?.release()
-        instance = null
+        mediaPlayer = null
     }
+
+
 
     fun playPreview(context: Context, previewUrl: String) {
         try {
             if (mediaPlayer == null) {
-                initMediaPlayer(context)
-            } else {
-                // Stop any currently playing audio before resetting
-                mediaPlayer?.stop()
-                mediaPlayer?.reset()
+                mediaPlayer = MediaPlayer()
             }
-            mediaPlayer?.setDataSource(previewUrl)
-            mediaPlayer?.prepareAsync()
-            mediaPlayer?.setOnPreparedListener {
-                it.start()
-            }
-            mediaPlayer?.setOnErrorListener { mp, what, extra ->
-                println("MediaPlayer Error: $what, $extra")
-                false
+            mediaPlayer?.apply {
+                reset()
+                setDataSource(previewUrl)
+                prepareAsync()
+                setOnPreparedListener {
+                    start()
+                }
+                setOnErrorListener { mp, what, extra ->
+                    println("MediaPlayer Error: $what, $extra")
+                    reset()
+                    true
+                }
             }
         } catch (e: Exception) {
             e.printStackTrace()
         }
     }
 
+
+
+
 }
+
+

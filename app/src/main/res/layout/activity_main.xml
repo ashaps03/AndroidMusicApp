@@ -7,6 +7,18 @@
     android:background="@drawable/gradient_glow"
     tools:context=".MainActivity">
 
+    <Switch
+        android:id="@+id/modeSwitch"
+        android:layout_width="144dp"
+        android:layout_height="41dp"
+        android:layout_marginBottom="700dp"
+        android:text="Mode: Oldies"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.059"
+        app:layout_constraintStart_toStartOf="parent" />
+
     <Button
         android:id="@+id/answerButton"
         android:layout_width="309dp"
@@ -117,24 +129,14 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="0"
+        android:textSize="14sp"
+        android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.96"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.004" />
-
-    <TextView
-        android:id="@+id/hintText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="179dp"
-        android:layout_marginEnd="175dp"
-        android:layout_marginBottom="46dp"
-        android:text="TextView"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintVertical_bias="0.043" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycle"
@@ -143,10 +145,60 @@
         android:visibility="invisible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.593"
+        app:layout_constraintHorizontal_bias="0.491"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.004"
-        tools:listitem="@layout/row_item" />
+        app:layout_constraintVertical_bias="0.086"
+        tools:listitem="@layout/row_item" >
+
+    </androidx.recyclerview.widget.RecyclerView>
+
+
+    <View
+        android:id="@+id/view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="#DD000000"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/resetButton"
+        android:layout_width="323dp"
+        android:layout_height="77dp"
+        android:layout_marginStart="40dp"
+        android:layout_marginEnd="60dp"
+        android:layout_marginBottom="176dp"
+        android:backgroundTint="#FFC107"
+        android:fontFamily="@font/baloo_bhaijaan"
+        android:text="RESET"
+        android:textColor="#FFFFFF"
+        android:textSize="34sp"
+        android:textStyle="bold"
+        android:visibility="gone"
+        app:cornerRadius="10dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.037"
+        app:layout_constraintStart_toStartOf="parent"
+        app:strokeColor="#000000"
+        app:strokeWidth="5dp" />
+
+    <TextView
+        android:id="@+id/timesUpText"
+        android:layout_width="318dp"
+        android:layout_height="139dp"
+        android:layout_marginTop="340dp"
+        android:textAlignment="center"
+        android:textColor="#FFFFFF"
+        android:textSize="34sp"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="@+id/view"
+        app:layout_constraintHorizontal_bias="0.503"
+        app:layout_constraintStart_toStartOf="@+id/view"
+        app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

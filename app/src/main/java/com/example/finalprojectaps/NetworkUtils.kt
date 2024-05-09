@@ -24,16 +24,16 @@ object NetworkUtils {
         client.newCall(request).enqueue(object : Callback {
             override fun onResponse(call: Call, response: Response) {
                 if (response.isSuccessful) {
-                    val responseBody = response.body()?.string()
+                    val responseBody = response.body?.string()
                     val accessToken = JSONObject(responseBody).optString("access_token")
-                    callback(accessToken) // Pass the access token to the callback
+                    callback(accessToken)
                 } else {
-                    callback(null) // Pass null to indicate failure
+                    callback(null)
                 }
             }
 
             override fun onFailure(call: Call, e: IOException) {
-                callback(null) // Pass null to indicate failure
+                callback(null)
             }
         })
     }

@@ -21,13 +21,10 @@ class SplashActivity : AppCompatActivity() {
         binding = ActivitySplashBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        //sound initiation
         audioPlayer = AudioPlayer.getInstance(this)
 
-        //firebase auth initiation
         auth = FirebaseAuth.getInstance()
 
-        //animation will play then transtion into the SignUpActivity2
         val animation = AnimationUtils.loadAnimation(this, R.anim.logo_animation)
         binding.logo.startAnimation(animation)
 

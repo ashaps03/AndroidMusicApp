@@ -1,7 +1,13 @@
 package com.example.finalprojectaps
 
 import PlaylistTrackResult
+import Track
 import android.content.Context
+import android.content.Intent
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.view.View
@@ -10,6 +16,8 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.finalprojectaps.databinding.ActivityMainBinding
+import com.google.ai.client.generativeai.GenerativeModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -18,22 +26,20 @@ import retrofit2.Callback
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import com.example.finalprojectaps.databinding.ActivityMainBinding
-import android.hardware.Sensor
-import android.hardware.SensorEvent
-import android.hardware.SensorEventListener
-import android.hardware.SensorManager
 
 
 class MainActivity : AppCompatActivity() {
 
+    private var currentPlaylistId ="37i9dQZEVXbLp5XoPON0wI"
+
+
     private lateinit var binding: ActivityMainBinding
     private lateinit var audioPlayer: AudioPlayer
     private var currentSongName: String = ""
-    private lateinit var songName: String // Declare songName as a class-level variable
-    private lateinit var songNames: String // Declare songName as a class-level variable
+    private lateinit var songName: String
+    private lateinit var songNames: String
 
-    private lateinit var hint: String // Declare songName as a class-level variable
+    private lateinit var hint: String
     private lateinit var myAdapter: MyAdapter
     private var myDataSet: Array<String> = arrayOf()
 
@@ -41,6 +47,15 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var sensorManager: SensorManager
     private var accelerometer: Sensor? = null
+
+    private lateinit var winResponse: String
+    private lateinit var loseResponse: String
+    private lateinit var timesUpText: String
+    private lateinit var timesUpResponse: String
+
+    private var randomTrack: Track? = null
+
+    private val API_KEY = "AIzaSyBueJPM7HZvI466Yav2aTvxf-TyP221-1I"
 
     private val sensorListener = object : SensorEventListener {
         private var lastUpdate: Long = 0
@@ -50,12 +65,10 @@ class MainActivity : AppCompatActivity() {
         private val SHAKE_THRESHOLD = 5
 
         override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {
-            // This can be left empty unless you have a specific use case
         }
 
         override fun onSensorChanged(event: SensorEvent) {
             val curTime = System.currentTimeMillis()
-            // only allow one update every 100ms.
             if ((curTime - lastUpdate) > 100) {
                 val diffTime = curTime - lastUpdate
                 lastUpdate = curTime
@@ -67,12 +80,11 @@ class MainActivity : AppCompatActivity() {
                 val speed = Math.abs(x + y + z - last_x - last_y - last_z) / diffTime * 10000
 
                 if (speed > SHAKE_THRESHOLD) {
-                    pass() // call your method to pass the song
+                    pass()
                     runOnUiThread {
                         Toast.makeText(this@MainActivity, "Song passed!", Toast.LENGTH_SHORT).show()
                     }
                 }
-
 
                 last_x = x
                 last_y = y
@@ -81,14 +93,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-
-
-
-
     private lateinit var timer: CountDownTimer
-    private val TIMER_DURATION: Long = 60000 // 1 minute in milliseconds
-    private var score: Int = 0 // Variable to keep track of the score
-
+    private val TIMER_DURATION: Long = 10000
+    private var score: Int = 0
 
     private val spotifyService: SpotifyService by lazy {
         createSpotifyService()
@@ -100,6 +107,28 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
         binding.recycle.layoutManager = LinearLayoutManager(this)
 
+        binding.resetButton.setOnClickListener {
+            resetGame()
+        }
+
+        binding.modeSwitch.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) {
+                binding.modeSwitch.text = "Mode: Oldies"
+                currentPlaylistId = "5TgjzgVos90ntuffZgQfBD"
+            } else {
+                binding.modeSwitch.text = "Mode: Current"
+                currentPlaylistId = "37i9dQZEVXbLp5XoPON0wI"
+            }
+        }
+
+        fetchRandomSongFromPlaylist(currentPlaylistId)
+
+        if (!API_KEY.isNullOrEmpty()) {
+            println("API key: $API_KEY")
+        } else {
+            println("API key is empty or null")
+        }
+
         // Initialize the adapter with an empty dataset
         myDataSet = arrayOf()
         myAdapter = MyAdapter(myDataSet)
@@ -110,26 +139,20 @@ class MainActivity : AppCompatActivity() {
 
         audioPlayer = AudioPlayer.getInstance(this)
 
-        // Apply animation to the ImageView
         val animation = AnimationUtils.loadAnimation(this, R.anim.logo_animation)
         binding.imageView.startAnimation(animation)
 
-
-        //sensor
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
         accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
 
 
-        // Call the function to fetch playlist tracks
-        fetchRandomSongFromPlaylist("37i9dQZF1DX1JDoW1OkYS7")
+        fetchRandomSongFromPlaylist(currentPlaylistId)
 
         binding.hintButton.setOnClickListener {
-            // Check if hint has already been shown
             if (!hintShown) {
                 toggleHintVisibility()
-                hintShown = true // Set the flag to true indicating that hint has been shown
+                hintShown = true
 
-                // Disable the hint button after it's clicked
                 binding.hintButton.isEnabled = false
             } else {
                 showToast("Hint already shown for this song.")
@@ -152,25 +175,28 @@ class MainActivity : AppCompatActivity() {
         }
 
     }
-
+//here
     override fun onResume() {
         super.onResume()
         accelerometer?.let {
             sensorManager.registerListener(sensorListener, it, SensorManager.SENSOR_DELAY_NORMAL)
+
         }
     }
-
     override fun onPause() {
         super.onPause()
         sensorManager.unregisterListener(sensorListener)
+        audioPlayer.pause()
     }
 
-
     private var currentHint: String = ""
-
-
+    private fun resetGame() {
+        val intent = Intent(this, MainActivity::class.java)
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+        startActivity(intent)
+        finish()
+    }
     private fun generateHint(songName: String): String {
-        // If the current hint is already generated, return it
         if (currentHint.isNotEmpty()) {
             return currentHint
         }
@@ -178,7 +204,6 @@ class MainActivity : AppCompatActivity() {
         val hintLength = songName.length
         val hintStringBuilder = StringBuilder()
 
-        // Append three random letters from the song name
         val randomIndices = songName.indices.shuffled().take(3)
         for (i in 0 until hintLength) {
             if (i in randomIndices) {
@@ -188,33 +213,25 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // Store the generated hint
         currentHint = hintStringBuilder.toString()
-
         return currentHint
     }
-
-
     private fun toggleHintVisibility() {
         if (binding.recycle.visibility == View.VISIBLE) {
             binding.recycle.visibility = View.GONE
         } else {
             binding.recycle.visibility = View.VISIBLE
 
-            // Generate hint based on the song name
             hint = generateHint(songName)
 
-            // Update the adapter with the new hint
             myAdapter.updateHint(hint)
             binding.hintButton.isEnabled = false
-
         }
     }
-
     private fun resetHintState() {
-        hintShown = false // Reset the hint shown flag
-        binding.recycle.visibility = View.GONE // Ensure hints are not visible
-        binding.hintButton.isEnabled = true // Enable hint button for new song
+        hintShown = false
+        binding.recycle.visibility = View.GONE
+        binding.hintButton.isEnabled = true
     }
     private fun showToast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
@@ -225,25 +242,34 @@ class MainActivity : AppCompatActivity() {
         val cleanUserAnswer = removeSpecialCharacters(userAnswer)
         val cleanSongName = removeSpecialCharacters(songName)
 
-        println("User's input: $userAnswer") // Output user's input to console
-        val randomTrack = // Assuming you have access to the randomTrack variable here
+        println("User's input: $userAnswer")
+        val randomTrack =
 
-            if (cleanUserAnswer.equals(cleanSongName, ignoreCase = true)) {
-            // Correct answer
-            // Do something here, like show a toast message or navigate to the next activity
-                showToast("Correct answer!")
+            CoroutineScope(Dispatchers.Main).launch {
+                val generativeModel = GenerativeModel(
+                    modelName = "models/gemini-1.0-pro",
+                    apiKey = "AIzaSyBueJPM7HZvI466Yav2aTvxf-TyP221-1I"
+                )
+
+                val winResponse = generativeModel.generateContent(prompt = "Create a very short phrase like you rock or congratulations").text
+
+                val loseResponse = generativeModel.generateContent(prompt = "Create a very short phrase like try again or better luck next time").text
+
+                if (cleanUserAnswer.equals(cleanSongName, ignoreCase = true)) {
+
+                    if (winResponse != null) {
+                        showToast(winResponse)
+                    }
                 binding.answerQTextview.text.clear()
                 score += 5
                 updateScoreText()
-                fetchRandomSongFromPlaylist("37i9dQZF1DX1JDoW1OkYS7")
-                resetHintState() // Call this to reset hint state after correct answer
-
-
+                    fetchRandomSongFromPlaylist(currentPlaylistId)
+                resetHintState()
 
             } else {
-            // Incorrect answer
-            // Do something here, like show a toast message
-            showToast("Incorrect answer! Try again.")
+                    if (loseResponse != null) {
+                        showToast(loseResponse)
+                    }
             binding.answerQTextview.text.clear()
 
 
@@ -251,37 +277,30 @@ class MainActivity : AppCompatActivity() {
                     score -= 5
                     updateScoreText()
                 } else {
-                    showToast("Error occurred.")
+                    if (loseResponse != null) {
+                        showToast(loseResponse)
+                    }
 
                 }
             }
+        }
     }
-
-
-
 
     private fun pass() {
         // Fetch a new random song
-        fetchRandomSongFromPlaylist("37i9dQZF1DX1JDoW1OkYS7")
+        fetchRandomSongFromPlaylist(currentPlaylistId)
         binding.recycle.visibility = View.GONE
         binding.hintButton.isEnabled = true
-
         hint = generateHint(songName)
         myAdapter.updateHint(hint)
-
     }
-
-
     private fun fetchRandomSongFromPlaylist(playlistId: String) {
 
-        // Coroutine scope to perform async operations
         CoroutineScope(Dispatchers.IO).launch {
-            // Get the access token
             val clientId = getString(R.string.spotify_client_id)
             val clientSecret = getString(R.string.spotify_client_secret)
             NetworkUtils.getToken(clientId, clientSecret) { accessToken ->
                 accessToken?.let { token ->
-                    // Make the API call using the retrieved access token
                     spotifyService.getPlaylistTracks(playlistId, "Bearer $token")
                         .enqueue(object : Callback<PlaylistTrackResult> {
                             override fun onResponse(
@@ -290,17 +309,20 @@ class MainActivity : AppCompatActivity() {
                             ) {
                                 if (response.isSuccessful) {
                                     val playlistTrackResult = response.body()
-                                    // Handle the response
                                     playlistTrackResult?.items?.let { tracks ->
                                         if (tracks.isNotEmpty()) {
-                                            // Pick a random track from the list
                                             val randomTrack = tracks.random().track
-                                            songName = randomTrack.name
-                                            hint = songName // Update the hint variable with the new song name
-                                            hintShown = false // Reset hint shown flag
-                                            currentHint = "" // Reset current hint
 
-                                            println(songName) // Print songName
+                                            if (randomTrack.previewUrl.isNullOrEmpty()) {
+                                                fetchRandomSongFromPlaylist(playlistId)
+                                            }
+
+                                            songName = randomTrack.name
+                                            hint = songName
+                                            hintShown = false
+                                            currentHint = ""
+
+                                            println(songName)
                                             println(randomTrack.name)
                                             println("Track Name: ${randomTrack.name}")
                                             println("Artist Name: ${randomTrack.artists.joinToString(", ") { it.name }}")
@@ -310,11 +332,8 @@ class MainActivity : AppCompatActivity() {
                                             val trackNames = tracks.map { it.track.name }.toTypedArray()
                                             runOnUiThread {
                                                 myDataSet = trackNames
-                                                myAdapter.updateData(myDataSet, hint) // Update the dataset and hint in the adapter
+                                                myAdapter.updateData(myDataSet, hint)
                                             }
-
-
-
 
                                             randomTrack.previewUrl?.let { previewUrl ->
                                                 audioPlayer.playPreview(this@MainActivity, previewUrl)
@@ -324,13 +343,11 @@ class MainActivity : AppCompatActivity() {
                                         }
                                     }
                                 } else {
-                                    // Handle unsuccessful response
                                     println("Failed to fetch playlist tracks: ${response.message()}")
                                 }
                             }
 
                             override fun onFailure(call: Call<PlaylistTrackResult>, t: Throwable) {
-                                // Handle network error
                                 println("Network error: ${t.message}")
                             }
                         })
@@ -339,7 +356,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // Retrofit service creation
     private fun createSpotifyService(): SpotifyService {
         return Retrofit.Builder()
             .baseUrl("https://api.spotify.com/")
@@ -349,7 +365,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startTimer() {
-        // Cancel the previous timer if it exists
         if (::timer.isInitialized) {
             timer.cancel()
         }
@@ -361,17 +376,30 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onFinish() {
-                showToast("Time's up!")
-                audioPlayer.stop()  // Stop the audio playback
-                binding.imageView.clearAnimation()  // Stop the animation on the ImageView
+                audioPlayer.pause()
+                binding.imageView.clearAnimation()
                 binding.answerQTextview.isEnabled = false
                 binding.answerQTextview.text.clear()
                 binding.answerButton.isEnabled = false
+                binding.view.isVisible = true
+                binding.resetButton.isVisible = true
 
-                // Timer finished, do something if needed
+                CoroutineScope(Dispatchers.Main).launch {
+                    val generativeModel = GenerativeModel(
+                        modelName = "models/gemini-1.0-pro",
+                        apiKey = "AIzaSyBueJPM7HZvI466Yav2aTvxf-TyP221-1I"
+                    )
+                    val timesUpResponse = generativeModel.generateContent(prompt = "Create a very short phrase to replace times up. Make it ironically comical.").text
+
+                    if (timesUpResponse != null) {
+                        binding.timesUpText.text = timesUpResponse
+                    } else {
+                        binding.timesUpText.text = "Time's up!"
+                    }
+                    binding.timesUpText.isVisible = true
+                }
             }
         }
-
         timer.start()
     }
 
