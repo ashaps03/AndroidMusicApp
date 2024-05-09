@@ -69,6 +69,8 @@ dependencies {
     implementation ("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation("com.google.ai.client.generativeai:generativeai:0.3.0")
     implementation ("androidx.preference:preference:1.1.1")
+    implementation ("com.google.firebase:firebase-firestore:24.0.1' // Check for the latest version in the Firebase documentation")
+
 
 
 

@@ -1,5 +1,6 @@
 package com.example.finalprojectaps
 
+import com.google.firebase.firestore.Query
 import PlaylistTrackResult
 import Track
 import android.content.Context
@@ -10,6 +11,7 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.os.Bundle
 import android.os.CountDownTimer
+import android.util.Log
 import android.view.View
 import android.view.animation.AnimationUtils
 import android.widget.Toast
@@ -18,6 +20,8 @@ import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.finalprojectaps.databinding.ActivityMainBinding
 import com.google.ai.client.generativeai.GenerativeModel
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -28,10 +32,13 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 
+
 class MainActivity : AppCompatActivity() {
 
     private var currentPlaylistId ="37i9dQZEVXbLp5XoPON0wI"
 
+    private lateinit var auth: FirebaseAuth
+    private lateinit var db: FirebaseFirestore
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var audioPlayer: AudioPlayer
@@ -94,7 +101,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private lateinit var timer: CountDownTimer
-    private val TIMER_DURATION: Long = 10000
+    private val TIMER_DURATION: Long = 60000
     private var score: Int = 0
 
     private val spotifyService: SpotifyService by lazy {
@@ -106,6 +113,21 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         binding.recycle.layoutManager = LinearLayoutManager(this)
+
+        auth = FirebaseAuth.getInstance()
+        db = FirebaseFirestore.getInstance()
+
+        if (auth.currentUser != null) {
+            fetchAndDisplayHighestScore()
+        } else {
+            Log.d("MainActivity", "Not logged in.")
+            binding.highScoreText.visibility = View.GONE
+            Toast.makeText(this, "Please log in to view high scores.", Toast.LENGTH_LONG).show()
+        }
+        val db = FirebaseFirestore.getInstance()
+        updateUserScore(email = "null", name = "null", score = 0)
+
+        loadModeSetting()
 
         binding.resetButton.setOnClickListener {
             resetGame()
@@ -119,6 +141,7 @@ class MainActivity : AppCompatActivity() {
                 binding.modeSwitch.text = "Mode: Current"
                 currentPlaylistId = "37i9dQZEVXbLp5XoPON0wI"
             }
+            saveModeSetting(isChecked)
         }
 
         fetchRandomSongFromPlaylist(currentPlaylistId)
@@ -126,10 +149,9 @@ class MainActivity : AppCompatActivity() {
         if (!API_KEY.isNullOrEmpty()) {
             println("API key: $API_KEY")
         } else {
-            println("API key is empty or null")
+            println("API key is null")
         }
 
-        // Initialize the adapter with an empty dataset
         myDataSet = arrayOf()
         myAdapter = MyAdapter(myDataSet)
         binding.recycle.adapter = myAdapter
@@ -175,7 +197,7 @@ class MainActivity : AppCompatActivity() {
         }
 
     }
-//here
+
     override fun onResume() {
         super.onResume()
         accelerometer?.let {
@@ -243,6 +265,13 @@ class MainActivity : AppCompatActivity() {
         val cleanSongName = removeSpecialCharacters(songName)
 
         println("User's input: $userAnswer")
+
+        if (auth.currentUser != null) {
+            updateUserScore(auth.currentUser!!.displayName ?: "Anonymous",
+                auth.currentUser!!.email ?: "No email provided",
+                score)
+        }
+
         val randomTrack =
 
             CoroutineScope(Dispatchers.Main).launch {
@@ -286,8 +315,57 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun updateUserScore(name: String, email: String, score: Int) {
+        val currentUser = auth.currentUser
+        if (currentUser != null) {
+            val scoreData = hashMapOf(
+                "name" to name,
+                "email" to email,
+                "score" to score,
+                "timestamp" to System.currentTimeMillis()
+            )
+
+            db.collection("users").document(currentUser.uid)
+                .collection("scores")
+                .add(scoreData)
+                .addOnSuccessListener {
+                    Log.d("Firestore", "Score stored!")
+                }
+                .addOnFailureListener { e ->
+                    Log.w("Firestore", "Error saving score", e)
+                }
+        } else {
+            Log.d("Firestore", "No user logged in, score not saved")
+        }
+    }
+
+    private fun fetchAndDisplayHighestScore() {
+        auth.currentUser?.let { user ->
+            db.collection("users")
+                .document(user.uid)
+                .collection("scores")
+                .orderBy("score", Query.Direction.DESCENDING)
+                .limit(1)
+                .get()
+                .addOnSuccessListener { querySnapshot ->
+                    if (!querySnapshot.isEmpty) {
+                        val highestScore = querySnapshot.documents[0].getLong("score") ?: 0
+                        binding.highScoreText.text = "Highest score: $highestScore"
+                    } else {
+                        binding.highScoreText.text = "Highest score: 0"
+                    }
+                }
+                .addOnFailureListener { e ->
+                    Log.w("Firestore", "Error fetching highest score", e)
+                    binding.highScoreText.text = "Failed to load high score"
+                }
+        }
+    }
+
+
+
+
     private fun pass() {
-        // Fetch a new random song
         fetchRandomSongFromPlaylist(currentPlaylistId)
         binding.recycle.visibility = View.GONE
         binding.hintButton.isEnabled = true
@@ -356,6 +434,17 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    fun saveModeSetting(isOldiesMode: Boolean) {
+        val sharedPrefs = getSharedPreferences("UserSettings", Context.MODE_PRIVATE)
+        sharedPrefs.edit().putBoolean("OldiesMode", isOldiesMode).apply()
+    }
+
+    fun loadModeSetting() {
+        val sharedPrefs = getSharedPreferences("UserSettings", Context.MODE_PRIVATE)
+        val isOldiesMode = sharedPrefs.getBoolean("OldiesMode", false)
+        binding.modeSwitch.isChecked = isOldiesMode
+    }
+
     private fun createSpotifyService(): SpotifyService {
         return Retrofit.Builder()
             .baseUrl("https://api.spotify.com/")
@@ -404,7 +493,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateScoreText() {
-        binding.scoreTrack.text = "Score: $score"
+        binding.scoreTrack.text = "Current Score: $score"
     }
 
     private fun removeSpecialCharacters(input: String): String {
